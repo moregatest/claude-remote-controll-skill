@@ -12,7 +12,7 @@ RC_INSTALL_PATH="${RC_INSTALL_PATH:-/usr/local/bin/rc}"
 
 _rc_usage() {
   echo "Usage:"
-  echo "  rc start <dir|path>   Start a remote-control session"
+  echo "  rc start <dir|path> [--effort <level>]   Start a remote-control session"
   echo "  rc list               List all running sessions"
   echo "  rc stop <dir|path>    Stop a running session"
   echo "  rc update             Update rc to the latest version"
@@ -20,6 +20,7 @@ _rc_usage() {
   echo ""
   echo "  <dir> is resolved relative to \$RC_CODES_DIR (default: ~/Codes)"
   echo "  Absolute paths and ~/... paths are also accepted."
+  echo "  --effort levels: low, normal, high, highmax (default: none)"
   echo ""
   echo "  Environment:"
   echo "    RC_CODES_DIR     Base directory for relative dir names (default: ~/Codes)"
@@ -28,6 +29,22 @@ _rc_usage() {
 
 _rc_start() {
   local input="$1"
+  local effort=""
+
+  # Parse optional --effort flag
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --effort)
+        effort="$2"
+        shift 2
+        ;;
+      *)
+        input="$1"
+        shift
+        ;;
+    esac
+  done
+
   if [[ -z "$input" ]]; then
     echo "Error: directory name required" >&2
     _rc_usage
@@ -65,10 +82,14 @@ _rc_start() {
     fi
   fi
 
+  local effort_flag=""
+  [[ -n "$effort" ]] && effort_flag="--effort $effort"
+
   cd "$target" && nohup claude remote-control \
     --permission-mode bypassPermissions \
     --spawn same-dir \
     --name "$name" \
+    ${effort_flag:+$effort_flag} \
     > "$RC_PIDS_DIR/$name.log" 2>&1 &
   local pid=$!
   echo $pid > "$RC_PIDS_DIR/$name.pid"
@@ -179,7 +200,7 @@ _rc_uninstall() {
 }
 
 case "$1" in
-  start)     _rc_start "$2" ;;
+  start)     shift; _rc_start "$@" ;;
   list)      _rc_list ;;
   stop)      _rc_stop "$2" ;;
   update)    _rc_update ;;
