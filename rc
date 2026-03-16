@@ -20,7 +20,7 @@ _rc_usage() {
   echo ""
   echo "  <dir> is resolved relative to \$RC_CODES_DIR (default: ~/Codes)"
   echo "  Absolute paths and ~/... paths are also accepted."
-  echo "  --effort levels: low, normal, high, highmax (default: none)"
+  echo "  --effort levels: low, medium, high, max (default: high)"
   echo ""
   echo "  Environment:"
   echo "    RC_CODES_DIR     Base directory for relative dir names (default: ~/Codes)"

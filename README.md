@@ -47,13 +47,13 @@ Add to `~/.zshrc` or `~/.bashrc` to persist.
 Each session starts with `--effort high` by default. Override per-session with the `--effort` flag:
 
 ```bash
-rc start tungTest --effort highmax
-rc start tungTest --effort normal
+rc start tungTest --effort max
+rc start tungTest --effort medium
 ```
 
-Available levels: `low` · `normal` · `high` · `highmax`
+Available levels: `low` · `medium` · `high` · `max`
 
-> See [Claude Code docs — Adjust effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) for details on how effort affects token budget and reasoning depth.
+> **Note:** `max` provides the deepest reasoning with no constraint on token spending (Opus 4.6 only, current session only). See [Claude Code docs — Adjust effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) for details.
 
 ## Usage
 
@@ -61,7 +61,7 @@ Available levels: `low` · `normal` · `high` · `highmax`
 
 ```bash
 rc start <dir>                    # default: --effort high
-rc start <dir> --effort highmax   # override effort
+rc start <dir> --effort max      # override effort
 rc start ~/other/dir              # absolute or ~/ path accepted
 rc list
 rc stop <dir>
