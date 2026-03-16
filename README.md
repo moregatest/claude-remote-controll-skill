@@ -32,6 +32,8 @@ cp -r claude-remote-controll-skill/remote-control ~/.claude/skills/
 
 ## Configuration
 
+### Base directory
+
 By default `rc start <name>` resolves relative names against `~/Codes`. Override with:
 
 ```bash
@@ -40,15 +42,31 @@ export RC_CODES_DIR=/path/to/your/projects
 
 Add to `~/.zshrc` or `~/.bashrc` to persist.
 
+### Effort level
+
+Each session starts with `--effort high` by default. Override per-session with the `--effort` flag:
+
+```bash
+rc start tungTest --effort highmax
+rc start tungTest --effort normal
+```
+
+Available levels: `low` · `normal` · `high` · `highmax`
+
+> See [Claude Code docs — Adjust effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) for details on how effort affects token budget and reasoning depth.
+
 ## Usage
 
 ### CLI
 
 ```bash
-rc start <dir>        # ~/Codes/<dir>
-rc start ~/other/dir  # absolute or ~/ path
+rc start <dir>                    # default: --effort high
+rc start <dir> --effort highmax   # override effort
+rc start ~/other/dir              # absolute or ~/ path accepted
 rc list
 rc stop <dir>
+rc update                         # pull latest version from GitHub
+rc uninstall                      # remove rc binary and PID files
 ```
 
 ### Via Claude Code (natural language)
