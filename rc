@@ -1,6 +1,6 @@
 #!/bin/zsh
 # rc - Claude Remote Control Session Manager
-# Install: cp rc /usr/local/bin/rc && chmod +x /usr/local/bin/rc
+# Install: sudo curl -fsSL https://raw.githubusercontent.com/moregatest/claude-remote-controll-skill/main/rc -o /usr/local/bin/rc && sudo chmod +x /usr/local/bin/rc
 
 RC_PIDS_DIR="$HOME/.claude/rc-pids"
 CODES_DIR="$HOME/Codes"
@@ -13,21 +13,26 @@ _rc_usage() {
 }
 
 _rc_start() {
-  local dir="$1"
-  if [[ -z "$dir" ]]; then
+  local input="$1"
+  if [[ -z "$input" ]]; then
     echo "Error: directory name required" >&2
     _rc_usage
     return 1
   fi
 
-  # If dir is an absolute or home-relative path, use it directly
+  # Resolve absolute path (handle ~ expansion manually)
   local target
-  if [[ "$dir" = /* ]] || [[ "$dir" = ~* ]]; then
-    target="${dir/#\~/$HOME}"
-    dir=$(basename "$target")
+  if [[ "$input" = /* ]]; then
+    target="$input"
+  elif [[ "$input" = "~/"* ]]; then
+    target="$HOME/${input:2}"
   else
-    target="$CODES_DIR/$dir"
+    target="$CODES_DIR/$input"
   fi
+
+  # Derive a short name for PID/log files
+  local name
+  name=$(basename "$target")
 
   if [[ ! -d "$target" ]]; then
     echo "Error: directory '$target' does not exist" >&2
@@ -36,12 +41,12 @@ _rc_start() {
 
   mkdir -p "$RC_PIDS_DIR"
 
-  local pidfile="$RC_PIDS_DIR/$dir.pid"
+  local pidfile="$RC_PIDS_DIR/$name.pid"
   if [[ -f "$pidfile" ]]; then
     local existing_pid
     existing_pid=$(cat "$pidfile")
     if kill -0 "$existing_pid" 2>/dev/null; then
-      echo "rc-$dir is already running (PID: $existing_pid)"
+      echo "rc-$name is already running (PID: $existing_pid)"
       return 0
     else
       rm "$pidfile"
@@ -51,11 +56,11 @@ _rc_start() {
   cd "$target" && nohup claude remote-control \
     --permission-mode bypassPermissions \
     --spawn same-dir \
-    --name "$dir" \
-    > "$RC_PIDS_DIR/$dir.log" 2>&1 &
+    --name "$name" \
+    > "$RC_PIDS_DIR/$name.log" 2>&1 &
   local pid=$!
-  echo $pid > "$RC_PIDS_DIR/$dir.pid"
-  echo "已啟動 rc-$dir (PID: $pid)"
+  echo $pid > "$RC_PIDS_DIR/$name.pid"
+  echo "已啟動 rc-$name (PID: $pid)"
 }
 
 _rc_list() {
@@ -80,30 +85,33 @@ _rc_list() {
 }
 
 _rc_stop() {
-  local dir="$1"
-  if [[ -z "$dir" ]]; then
+  local name="$1"
+  if [[ -z "$name" ]]; then
     echo "Error: directory name required" >&2
     _rc_usage
     return 1
   fi
 
-  local pidfile="$RC_PIDS_DIR/$dir.pid"
+  # Accept full path, extract basename
+  name=$(basename "$name")
+
+  local pidfile="$RC_PIDS_DIR/$name.pid"
   if [[ ! -f "$pidfile" ]]; then
-    echo "rc-$dir 不在執行中"
+    echo "rc-$name 不在執行中"
     return 0
   fi
 
   local pid
   pid=$(cat "$pidfile")
   if ! kill -0 "$pid" 2>/dev/null; then
-    echo "rc-$dir 不在執行中（已清除殘留 PID 檔）"
+    echo "rc-$name 不在執行中（已清除殘留 PID 檔）"
     rm "$pidfile"
     return 0
   fi
 
   kill "$pid"
   rm "$pidfile"
-  echo "已停止 rc-$dir"
+  echo "已停止 rc-$name"
 }
 
 case "$1" in
