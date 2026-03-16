@@ -20,7 +20,15 @@ _rc_start() {
     return 1
   fi
 
-  local target="$CODES_DIR/$dir"
+  # If dir is an absolute or home-relative path, use it directly
+  local target
+  if [[ "$dir" = /* ]] || [[ "$dir" = ~* ]]; then
+    target="${dir/#\~/$HOME}"
+    dir=$(basename "$target")
+  else
+    target="$CODES_DIR/$dir"
+  fi
+
   if [[ ! -d "$target" ]]; then
     echo "Error: directory '$target' does not exist" >&2
     return 1
