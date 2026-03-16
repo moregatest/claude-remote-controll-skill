@@ -6,17 +6,24 @@ RC_PIDS_DIR="$HOME/.claude/rc-pids"
 # Override default base directory via environment variable
 CODES_DIR="${RC_CODES_DIR:-$HOME/Codes}"
 
+RC_REPO="https://github.com/moregatest/claude-remote-controll-skill"
+RC_INSTALL_PATH="${RC_INSTALL_PATH:-$(which rc 2>/dev/null)}"
+RC_INSTALL_PATH="${RC_INSTALL_PATH:-/usr/local/bin/rc}"
+
 _rc_usage() {
   echo "Usage:"
   echo "  rc start <dir|path>   Start a remote-control session"
   echo "  rc list               List all running sessions"
   echo "  rc stop <dir|path>    Stop a running session"
+  echo "  rc update             Update rc to the latest version"
+  echo "  rc uninstall          Remove rc from the system"
   echo ""
   echo "  <dir> is resolved relative to \$RC_CODES_DIR (default: ~/Codes)"
   echo "  Absolute paths and ~/... paths are also accepted."
   echo ""
   echo "  Environment:"
-  echo "    RC_CODES_DIR   Base directory for relative dir names (default: ~/Codes)"
+  echo "    RC_CODES_DIR     Base directory for relative dir names (default: ~/Codes)"
+  echo "    RC_INSTALL_PATH  Path to the rc binary (default: $(which rc 2>/dev/null || echo '/usr/local/bin/rc'))"
 }
 
 _rc_start() {
@@ -118,10 +125,65 @@ _rc_stop() {
   echo "已停止 rc-$name"
 }
 
+_rc_update() {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap "rm -rf $tmpdir" EXIT
+
+  echo "Cloning latest version..."
+  if ! git clone --depth 1 "$RC_REPO" "$tmpdir/repo" 2>/dev/null; then
+    echo "Error: failed to clone $RC_REPO" >&2
+    return 1
+  fi
+
+  local new_script="$tmpdir/repo/rc"
+  if [[ ! -f "$new_script" ]]; then
+    echo "Error: rc script not found in repo" >&2
+    return 1
+  fi
+
+  echo "Installing to $RC_INSTALL_PATH ..."
+  if [[ -w "$RC_INSTALL_PATH" ]] || [[ -w "$(dirname "$RC_INSTALL_PATH")" ]]; then
+    cp "$new_script" "$RC_INSTALL_PATH"
+    chmod +x "$RC_INSTALL_PATH"
+  else
+    sudo cp "$new_script" "$RC_INSTALL_PATH"
+    sudo chmod +x "$RC_INSTALL_PATH"
+  fi
+
+  echo "Updated rc at $RC_INSTALL_PATH"
+}
+
+_rc_uninstall() {
+  if [[ ! -f "$RC_INSTALL_PATH" ]]; then
+    echo "rc not found at $RC_INSTALL_PATH" >&2
+    return 1
+  fi
+
+  echo "This will remove $RC_INSTALL_PATH and all PID/log files under $RC_PIDS_DIR"
+  echo -n "Confirm? [y/N] "
+  read -r confirm
+  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "Aborted."
+    return 0
+  fi
+
+  if [[ -w "$RC_INSTALL_PATH" ]]; then
+    rm "$RC_INSTALL_PATH"
+  else
+    sudo rm "$RC_INSTALL_PATH"
+  fi
+
+  rm -rf "$RC_PIDS_DIR"
+  echo "Uninstalled."
+}
+
 case "$1" in
-  start) _rc_start "$2" ;;
-  list)  _rc_list ;;
-  stop)  _rc_stop "$2" ;;
+  start)     _rc_start "$2" ;;
+  list)      _rc_list ;;
+  stop)      _rc_stop "$2" ;;
+  update)    _rc_update ;;
+  uninstall) _rc_uninstall ;;
   *)
     _rc_usage
     exit 1
