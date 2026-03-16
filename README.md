@@ -7,8 +7,10 @@ A Claude Code skill + `rc` CLI for managing `claude remote-control` sessions as 
 ### 1. Install the `rc` command
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/moregatest/claude-remote-controll-skill/main/rc -o /usr/local/bin/rc && chmod +x /usr/local/bin/rc
+curl -fsSL "https://raw.githubusercontent.com/moregatest/claude-remote-controll-skill/main/rc?$(date +%s)" | sudo tee /usr/local/bin/rc > /dev/null && sudo chmod +x /usr/local/bin/rc
 ```
+
+> `?$(date +%s)` bypasses GitHub's CDN cache to ensure you always get the latest version.
 
 ### 2. Install the Claude Code skill
 
