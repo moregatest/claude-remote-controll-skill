@@ -11,19 +11,19 @@ Manage claude remote-control sessions as background processes. All sessions use 
 
 ## IMMEDIATE: 技能載入時立即執行
 
-**當此技能被載入時，必須立刻執行以下檢查，在做任何事之前：**
+**當此技能被載入時，必須立刻檢查 `rc` 指令是否已安裝：**
 
 ```bash
-which claude
+which rc
 ```
 
 - If found → 繼續處理使用者的請求
 - If not found → **立即停止**，告訴使用者：
-  > `claude` CLI 尚未安裝，請先執行：
+  > `rc` 指令尚未安裝，請執行以下指令安裝：
+  > ```bash
+  > curl -fsSL https://raw.githubusercontent.com/moregatest/claude-remote-controll-skill/main/rc -o /usr/local/bin/rc && chmod +x /usr/local/bin/rc
   > ```
-  > npm install -g @anthropic-ai/claude-code
-  > ```
-  > 安裝完成後再重新操作。
+  > 安裝完成後重新開啟 terminal 即可使用。
 
   **不繼續執行任何後續操作。**
 

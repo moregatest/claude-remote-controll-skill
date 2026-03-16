@@ -1,0 +1,109 @@
+#!/bin/zsh
+# rc - Claude Remote Control Session Manager
+# Install: cp rc /usr/local/bin/rc && chmod +x /usr/local/bin/rc
+
+RC_PIDS_DIR="$HOME/.claude/rc-pids"
+CODES_DIR="$HOME/Codes"
+
+_rc_usage() {
+  echo "Usage:"
+  echo "  rc start <dir>   Start a remote-control session in ~/Codes/<dir>"
+  echo "  rc list          List all running sessions"
+  echo "  rc stop <dir>    Stop a running session"
+}
+
+_rc_start() {
+  local dir="$1"
+  if [[ -z "$dir" ]]; then
+    echo "Error: directory name required" >&2
+    _rc_usage
+    return 1
+  fi
+
+  local target="$CODES_DIR/$dir"
+  if [[ ! -d "$target" ]]; then
+    echo "Error: directory '$target' does not exist" >&2
+    return 1
+  fi
+
+  mkdir -p "$RC_PIDS_DIR"
+
+  local pidfile="$RC_PIDS_DIR/$dir.pid"
+  if [[ -f "$pidfile" ]]; then
+    local existing_pid
+    existing_pid=$(cat "$pidfile")
+    if kill -0 "$existing_pid" 2>/dev/null; then
+      echo "rc-$dir is already running (PID: $existing_pid)"
+      return 0
+    else
+      rm "$pidfile"
+    fi
+  fi
+
+  cd "$target" && nohup claude remote-control \
+    --permission-mode bypassPermissions \
+    --spawn same-dir \
+    --name "$dir" \
+    > "$RC_PIDS_DIR/$dir.log" 2>&1 &
+  local pid=$!
+  echo $pid > "$RC_PIDS_DIR/$dir.pid"
+  echo "已啟動 rc-$dir (PID: $pid)"
+}
+
+_rc_list() {
+  mkdir -p "$RC_PIDS_DIR"
+  local found=0
+  for pidfile in "$RC_PIDS_DIR"/*.pid(N); do
+    local name
+    name=$(basename "$pidfile" .pid)
+    local pid
+    pid=$(cat "$pidfile")
+    if kill -0 "$pid" 2>/dev/null; then
+      echo "$name (PID: $pid) - running"
+      found=1
+    else
+      echo "$name (PID: $pid) - stopped"
+      rm "$pidfile"
+    fi
+  done
+  if [[ $found -eq 0 ]]; then
+    echo "目前沒有 rc session 在跑"
+  fi
+}
+
+_rc_stop() {
+  local dir="$1"
+  if [[ -z "$dir" ]]; then
+    echo "Error: directory name required" >&2
+    _rc_usage
+    return 1
+  fi
+
+  local pidfile="$RC_PIDS_DIR/$dir.pid"
+  if [[ ! -f "$pidfile" ]]; then
+    echo "rc-$dir 不在執行中"
+    return 0
+  fi
+
+  local pid
+  pid=$(cat "$pidfile")
+  if ! kill -0 "$pid" 2>/dev/null; then
+    echo "rc-$dir 不在執行中（已清除殘留 PID 檔）"
+    rm "$pidfile"
+    return 0
+  fi
+
+  kill "$pid"
+  rm "$pidfile"
+  echo "已停止 rc-$dir"
+}
+
+case "$1" in
+  start) _rc_start "$2" ;;
+  list)  _rc_list ;;
+  stop)  _rc_stop "$2" ;;
+  *)
+    _rc_usage
+    exit 1
+    ;;
+esac
