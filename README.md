@@ -2,49 +2,64 @@
 
 A Claude Code skill + `rc` CLI for managing `claude remote-control` sessions as background processes.
 
-## Quick Install
+## Install
 
 ### 1. Install the `rc` command
 
+Clone the repo, review the script, then install:
+
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/moregatest/claude-remote-controll-skill/main/rc?$(date +%s)" | sudo tee /usr/local/bin/rc > /dev/null && sudo chmod +x /usr/local/bin/rc
+git clone https://github.com/moregatest/claude-remote-controll-skill.git
+cat claude-remote-controll-skill/rc   # review before running as root
+sudo cp claude-remote-controll-skill/rc /usr/local/bin/rc
+sudo chmod +x /usr/local/bin/rc
 ```
 
-> `?$(date +%s)` bypasses GitHub's CDN cache to ensure you always get the latest version.
+Alternatively install to a user-writable location without sudo:
+
+```bash
+mkdir -p ~/.local/bin
+cp claude-remote-controll-skill/rc ~/.local/bin/rc
+chmod +x ~/.local/bin/rc
+# make sure ~/.local/bin is in your PATH
+```
 
 ### 2. Install the Claude Code skill
 
 ```bash
-cp -r remote-control ~/.claude/skills/
-```
-
-Or clone and install:
-
-```bash
-git clone https://github.com/moregatest/claude-remote-controll-skill.git
 cp -r claude-remote-controll-skill/remote-control ~/.claude/skills/
 ```
 
-## Usage
+## Configuration
 
-### CLI (`rc`)
+By default `rc start <name>` resolves relative names against `~/Codes`. Override with:
 
 ```bash
-rc start <dir>   # Start session in ~/Codes/<dir>
-rc list          # List all sessions
-rc stop <dir>    # Stop a session
+export RC_CODES_DIR=/path/to/your/projects
+```
+
+Add to `~/.zshrc` or `~/.bashrc` to persist.
+
+## Usage
+
+### CLI
+
+```bash
+rc start <dir>        # ~/Codes/<dir>
+rc start ~/other/dir  # absolute or ~/ path
+rc list
+rc stop <dir>
 ```
 
 ### Via Claude Code (natural language)
 
-- **Start**: "rc start tungTest" / "開一個 rc session 在 tungTest"
-- **List**: "rc list" / "列出 rc"
-- **Stop**: "rc stop tungTest" / "停掉 rc tungTest"
+- "rc start tungTest" / "開一個 rc session 在 tungTest"
+- "rc list" / "列出 rc"
+- "rc stop tungTest" / "停掉 rc tungTest"
 
 ## How it works
 
 - Sessions run as background processes (no tmux)
-- Working directory: `~/Codes/<dir>`
-- PID files: `~/.claude/rc-pids/<dir>.pid`
-- Log files: `~/.claude/rc-pids/<dir>.log`
-- Claude Code skill auto-detects if `rc` is installed and prompts installation if missing
+- PID files: `~/.claude/rc-pids/<name>.pid`
+- Log files: `~/.claude/rc-pids/<name>.log`
+- Claude Code skill detects if `rc` is installed and shows install instructions if missing

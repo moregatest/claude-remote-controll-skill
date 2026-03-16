@@ -1,15 +1,22 @@
 #!/bin/zsh
 # rc - Claude Remote Control Session Manager
-# Install: sudo curl -fsSL https://raw.githubusercontent.com/moregatest/claude-remote-controll-skill/main/rc -o /usr/local/bin/rc && sudo chmod +x /usr/local/bin/rc
+# See https://github.com/moregatest/claude-remote-controll-skill for install instructions
 
 RC_PIDS_DIR="$HOME/.claude/rc-pids"
-CODES_DIR="$HOME/Codes"
+# Override default base directory via environment variable
+CODES_DIR="${RC_CODES_DIR:-$HOME/Codes}"
 
 _rc_usage() {
   echo "Usage:"
-  echo "  rc start <dir>   Start a remote-control session in ~/Codes/<dir>"
-  echo "  rc list          List all running sessions"
-  echo "  rc stop <dir>    Stop a running session"
+  echo "  rc start <dir|path>   Start a remote-control session"
+  echo "  rc list               List all running sessions"
+  echo "  rc stop <dir|path>    Stop a running session"
+  echo ""
+  echo "  <dir> is resolved relative to \$RC_CODES_DIR (default: ~/Codes)"
+  echo "  Absolute paths and ~/... paths are also accepted."
+  echo ""
+  echo "  Environment:"
+  echo "    RC_CODES_DIR   Base directory for relative dir names (default: ~/Codes)"
 }
 
 _rc_start() {
@@ -20,7 +27,6 @@ _rc_start() {
     return 1
   fi
 
-  # Resolve absolute path (handle ~ expansion manually)
   local target
   if [[ "$input" = /* ]]; then
     target="$input"
@@ -30,7 +36,6 @@ _rc_start() {
     target="$CODES_DIR/$input"
   fi
 
-  # Derive a short name for PID/log files
   local name
   name=$(basename "$target")
 
@@ -92,7 +97,6 @@ _rc_stop() {
     return 1
   fi
 
-  # Accept full path, extract basename
   name=$(basename "$name")
 
   local pidfile="$RC_PIDS_DIR/$name.pid"

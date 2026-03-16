@@ -19,11 +19,16 @@ which rc
 
 - If found → 繼續處理使用者的請求
 - If not found → **立即停止**，告訴使用者：
-  > `rc` 指令尚未安裝，請執行以下指令安裝：
+  > `rc` 指令尚未安裝，請先 clone repo、檢視內容後再安裝：
   > ```bash
-  > curl -fsSL https://raw.githubusercontent.com/moregatest/claude-remote-controll-skill/main/rc -o /usr/local/bin/rc && chmod +x /usr/local/bin/rc
+  > git clone https://github.com/moregatest/claude-remote-controll-skill.git
+  > cat claude-remote-controll-skill/rc   # 安裝前請自行審查
+  > sudo cp claude-remote-controll-skill/rc /usr/local/bin/rc
+  > sudo chmod +x /usr/local/bin/rc
   > ```
-  > 安裝完成後重新開啟 terminal 即可使用。
+  > 詳見 https://github.com/moregatest/claude-remote-controll-skill
+
+  **不繼續執行任何後續操作。**
 
   **不繼續執行任何後續操作。**
 
