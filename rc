@@ -29,7 +29,7 @@ _rc_usage() {
 
 _rc_start() {
   local input="$1"
-  local effort=""
+  local effort="high"
 
   # Parse optional --effort flag
   while [[ $# -gt 0 ]]; do
